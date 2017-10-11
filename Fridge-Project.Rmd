@@ -1,0 +1,473 @@
+---
+title: "Refrigerator Sales Project"
+author:
+- Carly Rose Willing
+- Brian Clare
+- Joe Kass
+- Melody Shaff
+- Elise Roche
+date: "October 10, 2017"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+#load libraries
+#Please use install.packages("gridExtra") for this presentation
+library(knitr)
+library(tidyverse)
+library(grid)
+library(gridExtra)
+
+#input data
+fridge <- read_csv("https://www.eia.gov/consumption/residential/data/2015/csv/recs2015_public_v1.csv") %>% 
+select(KOWNRENT, NUMFRIG, SIZRFRI1, TYPERFR1, AGERFRI1, ICE, SIZRFRI2, AGERFRI2, LOCRFRI2, NUMFREEZ, NUMMEAL, REBATEAPP, RECYCAPP, TAXCREDITAPP, ESFREEZE, ESFRIG, EMPLOYHH, ATHOME, MONEYPY, DIVISION, UATYP10)
+```
+
+# Introduction 
+
+In this project, we set out to determine which of the Energy Consumption Survey statistics are related to refrigerator ownership. We wanted to learn who the market audience is for different sizes and types of refrigerators, as well as glean who the primary purchasers are for multiple refrigerators. We examined the data in sets (household makeup, region of the country, climate, eco-friendly incentives, etc.) to find which variables were having an effect on refrigerator ownership in number, size, and type. We sought to draw meaningful conclusions about where (and where not) and who (and who not) to advertise refrigerators to, and further which refrigerators would be best received by these various groups. 
+
+
+# Goals of Research
+
+- Determine which of the Energy Consumption Survey statistics are related to refrigerator ownership
+
+- Provide relevant areas to advertise refrigerators
+
+- Point out groups that may be less valuable to advertise
+
+```{r include = FALSE}
+#clean the fridge data
+
+fridge$AGERFRI1 <- apply(as.matrix(fridge[,5]), MARGIN = 2, function(x) {ifelse(x == -2, NA, x)})
+fridge$AGERFRI1 <- apply(fridge[,5], MARGIN = 2, function(x) {ifelse(x == 5, 20, x)})
+fridge$AGERFRI1 <- apply(fridge$AGERFRI1, MARGIN = 2, function(x) {ifelse(x == 42, 17, x)})
+fridge$AGERFRI1 <- apply(fridge$AGERFRI1, MARGIN = 2, function(x) {ifelse(x == 41, 12, x)})
+fridge$AGERFRI1 <- apply(fridge$AGERFRI1, MARGIN = 2, function(x) {ifelse(x == 3, 7, x)})
+fridge$AGERFRI1 <- apply(fridge$AGERFRI1, MARGIN = 2, function(x) {ifelse(x == 2, 3, x)})
+
+fridge$TYPERFR1 <- apply(fridge[,4], MARGIN = 2, function(x){ifelse(x == -2, NA, x)})
+fridge$TYPERFR1 <- apply(fridge[,4], MARGIN = 2, function(x){ifelse(x == 21 | x == 22 | x == 23, 2, x)})
+fridge$TYPERFR1 <- apply(fridge[,4], MARGIN = 2, function(x){ifelse(x == 5, 3, x)})
+
+fridge$ICE <- apply(fridge[,6], MARGIN = 2, function(x){ifelse(x == -2, NA, x)})
+fridge$ICE <- apply(fridge[,6], MARGIN = 2, function(x){ifelse(x == 1, "Ice", x)})
+fridge$ICE <- apply(fridge[,6], MARGIN = 2, function(x){ifelse(x == 0, "No Ice", x)})
+
+fridge$KOWNRENT <- apply(fridge[,1], MARGIN = 2, function(x){ifelse(x == 1, "Owned", x)})
+fridge$KOWNRENT <- apply(fridge[,1], MARGIN = 2, function(x){ifelse(x == 2, "Rented", x)})
+fridge$KOWNRENT <- apply(fridge[,1], MARGIN = 2, function(x){ifelse(x == 3, "Other", x)})
+
+fridge$SIZRFRI1 <- apply(fridge[,3], MARGIN = 2, function(x){ifelse(x == -2, NA, x)})
+
+fridge$LOCRFRI2 <- apply(fridge[,9], MARGIN = 2, function(x){ifelse(x == -2, NA, x)})
+fridge$LOCRFRI2 <- apply(fridge[,9], MARGIN = 2, function(x){ifelse(x == 1, "Basement", x)})
+fridge$LOCRFRI2 <- apply(fridge[,9], MARGIN = 2, function(x){ifelse(x == 2, "Garage", x)})
+fridge$LOCRFRI2 <- apply(fridge[,9], MARGIN = 2, function(x){ifelse(x == 3, "Outside", x)})
+fridge$LOCRFRI2 <- apply(fridge[,9], MARGIN = 2, function(x){ifelse(x == 4, "Main Floor", x)})
+fridge$LOCRFRI2 <- apply(fridge[,9], MARGIN = 2, function(x){ifelse(x == 9, "Other", x)})
+fridge$NUMMEAL <- apply(fridge[,11], MARGIN = 2, function(x) {ifelse(x == 1, 21, x )})
+fridge$NUMMEAL <- apply(fridge[,11], MARGIN = 2, function(x) {ifelse(x == 2, 14, x )})
+fridge$NUMMEAL <- apply(fridge[,11], MARGIN = 2, function(x) {ifelse(x == 3, 7, x )})
+fridge$NUMMEAL <- apply(fridge[,11], MARGIN = 2, function(x) {ifelse(x == 4, 3.5, x )})
+fridge$NUMMEAL <- apply(fridge[,11], MARGIN = 2, function(x) {ifelse(x == 5, 1, x )})
+fridge$NUMMEAL <- apply(fridge[,11], MARGIN = 2, function(x) {ifelse(x == 6, 0.5, x )})
+fridge$DIVISION <- apply(fridge[,20], MARGIN = 2, function(x){ifelse(x == 1, "New England", x)})
+fridge$DIVISION <- apply(fridge[,20], MARGIN = 2, function(x){ifelse(x == 2, "Mid Atlantic", x)})
+fridge$DIVISION <- apply(fridge[,20], MARGIN = 2, function(x){ifelse(x == 3, "East North Central", x)})
+fridge$DIVISION <- apply(fridge[,20], MARGIN = 2, function(x){ifelse(x == 4, "West North Central", x)})
+fridge$DIVISION <- apply(fridge[,20], MARGIN = 2, function(x){ifelse(x == 5, "South Atlantic", x)})
+fridge$DIVISION <- apply(fridge[,20], MARGIN = 2, function(x){ifelse(x == 6, "East South Central", x)})
+fridge$DIVISION <- apply(fridge[,20], MARGIN = 2, function(x){ifelse(x == 7, "West South Central", x)})
+fridge$DIVISION <- apply(fridge[,20], MARGIN = 2, function(x){ifelse(x == 8, "Mountain North", x)})
+fridge$DIVISION <- apply(fridge[,20], MARGIN = 2, function(x){ifelse(x == 9, "Mountain South", x)})
+fridge$DIVISION <- apply(fridge[,20], MARGIN = 2, function(x){ifelse(x == 10, "Pacific", x)})
+
+rebate1 <- filter(fridge, REBATEAPP > -1)
+rebate2 <- filter(fridge, RECYCAPP > -1)
+rebate3 <- filter(fridge, TAXCREDITAPP > -1)
+```
+
+\pagebreak
+
+# General Refrigerator Size
+
+Size categories 3 and 4 represent refrigerators with 17.6 to 22.5 and 22.6 to 29.5 cubic feet of storage volume. They are by far the most popular sizes of primary refrigerator. The larger size of common refrigerator is more likely to have a through-door ice dispenser.
+
+Size category 2, 17.5 cubic feet or less, is a less popular alternative.
+
+On the fringes, compact fridges and fridges with volume more than 29.5 cubic feet are extremely uncommon.
+
+```{r warning = FALSE}
+ggplot(data = fridge, mapping = aes(x = SIZRFRI1)) + 
+  geom_bar(mapping = aes(fill = ICE)) +
+  labs(x = "Size of Primary Refrigerator", fill = "Ice dispenser")
+```
+  
+\pagebreak  
+  
+# Second Refrigerator Size
+
+Though most respondents owned only one refrigerator, many had a second fridge in use. As we might expect, smaller fridge sizes (including compacts) are more common for second fridges but the "regular" sizes are still very common.
+
+Most second fridges are located in a basement, garage, or on the main floor of the home. The main floor is more common for compact second fridges, while a second large refrigerator is more likely to be in a basement or garage.
+
+``` {r warning = FALSE}
+ggplot(data = filter(fridge, SIZRFRI2 > 0), mapping = aes(x = SIZRFRI2)) +
+  geom_bar(mapping = aes(fill = LOCRFRI2)) +
+  labs(x = "Size of 2nd Refrigerator", fill = "Location of 2nd Refrigerator")
+```
+
+\pagebreak
+
+# Most refrigerators have 2 doors in some configuration. Ice dispensers are less than 50% of 2-door models.
+
+Refrigerators generally have 1 or 2 doors, although some larger models have 3 doors. We can see that 2 door models are the most common, and that through-door ice dispensers are common (though not a majority) for 2 door fridges and very rare for single door models.
+
+```{r warning = FALSE}
+ggplot(data = fridge, mapping = aes(x = TYPERFR1)) + 
+  geom_bar(mapping = aes(fill = ICE)) +
+  labs(x = "Doors of Primary Refrigerator", fill = "Ice dispenser")
+```
+
+\pagebreak
+
+# Rebates and Tax Incentives
+
+Data regarding the effectiveness of monetary incentives shows that those who receive them are more likely to purchase a refrigerator. The dataset shows that people are more likely to own multiple refrigerators if they received a rebate or tax credit. Likewise, people who received these incentives were more likely to have a newer refrigerator. This suggests that incentives like rebates and tax credits influence whether or not consumers purchase new or additional refrigerators. The data also shows that incentives influence whether consumers will invest more in these refrigerators. 3-door refrigerators are more expensive than their simpler counterparts, and are purchased more by rebate holders. Thus, offering a monetary incentive for customers for higher-end products would be worthwhile.
+
+# Number of Refrigerators Owned vs. Rebates
+
+Those who receive rebates are more likely to own multiple refrigerators.
+
+
+```{r}
+# subsets those who did and did not receive a rebate from supplier for buying a new appliance; 
+#makes bar graphs showing number of refrigerators for each group
+yrebate<-filter(rebate1, REBATEAPP==1)
+plot1 <- ggplot(data=yrebate) + geom_bar(data=yrebate, aes(x=NUMFRIG, fill=as.factor(NUMFRIG)), show.legend=FALSE) + labs(x="Number of Refrigerators in Household", y="Households", title="Respondent Received Rebate from Utility Supplier") 
+nrebate <-filter(rebate1, REBATEAPP==0)
+plot2<- ggplot(data=nrebate) + geom_bar(data=nrebate, aes(x=NUMFRIG, fill=as.factor(NUMFRIG)), show.legend=FALSE) + labs(x="Number of Refrigerators in Household",y="Households", title="Respondent Did Not Receive Rebate from Utility Supplier")
+
+# subsets those who did and did not receive a rebate for recycling an old appliance; 
+#makes bar graphs showing number of refrigerators for each group
+yrrebate<-filter(rebate2, RECYCAPP==1)
+plot3<- ggplot(data=yrrebate) + geom_bar(data=yrrebate, aes(x=NUMFRIG, fill=as.factor(NUMFRIG)), show.legend=FALSE) + labs(x="Number of Refrigerators in Household",y="Households", title="Respondent Received Rebate for Recycling Old Appliance") 
+nrrebate <-filter(rebate2, RECYCAPP==0)
+plot4<-ggplot(data=nrrebate) + geom_bar(data=nrrebate, aes(x=NUMFRIG, fill=as.factor(NUMFRIG)), show.legend=FALSE) + labs(x="Number of Refrigerators in Household",y="Households", title="Respondent Did Not Receive Rebate for Recycling Appliance")
+
+# subsets those who did and did not receive a tax credit for buying a new appliance; 
+#makes bar graphs showing number of refrigerators for each group
+ytrebate<-filter(rebate3, TAXCREDITAPP==1)
+plot5<-ggplot(data=ytrebate) + geom_bar(data=ytrebate, aes(x=NUMFRIG, fill=as.factor(NUMFRIG)), show.legend=FALSE) + labs(x="Number of Refrigerators in Household",y="Households", title="Respondent Received Tax Credit") 
+ntrebate <-filter(rebate3, TAXCREDITAPP==0)
+plot6<-ggplot(data=ntrebate) + geom_bar(data=ntrebate, aes(x=NUMFRIG, fill=as.factor(NUMFRIG)), show.legend=FALSE) + labs(x="Number of Refrigerators in Household", y="Households",title="Respondent Did Not Receive Tax Credit")
+
+plot1 <- plot1 + theme(plot.title = element_text( size = 7), axis.title=element_text(size = 7))
+plot2 <- plot2 + theme(plot.title = element_text( size = 8), axis.title=element_text(size = 7))
+plot3 <- plot3 + theme(plot.title = element_text( size = 7), axis.title=element_text(size = 7))
+plot4 <- plot4 + theme(plot.title = element_text( size = 7), axis.title=element_text(size = 7))
+plot5 <- plot5 + theme(plot.title = element_text( size = 9), axis.title=element_text(size = 7))
+plot6 <- plot6 + theme(plot.title = element_text( size = 9), axis.title=element_text(size = 7))
+grid.arrange(plot1, plot2, plot3, plot4, plot5, plot6, ncol=2)
+```
+
+\pagebreak
+
+# Age of Primary Refrigerator vs. Rebates
+
+Newer refrigerators are more common with rebates
+
+```{r warning = FALSE}
+
+# subsets those who did and did not receive a rebate from supplier for buying a new appliance; 
+#makes bar graphs showing age of main refrigerator for each group
+yrebate<-filter(rebate1, REBATEAPP==1)
+plot1 <- ggplot(data=yrebate) + geom_bar(data=yrebate, aes(x=AGERFRI1, fill=as.factor(AGERFRI1)), show.legend=FALSE) + labs(x="Age of Refrigerator", y= "Number of Households", title="Respondent Received Rebate from Utility Supplier") 
+nrebate <-filter(rebate1, REBATEAPP==0)
+plot2 <- ggplot(data=nrebate) + geom_bar(data=nrebate, aes(x=AGERFRI1, fill=as.factor(AGERFRI1)), show.legend=FALSE) + labs(x="Age of Refrigerator", y= "Number of Households",  title="Respondent Did Not Receive Rebate from Utility Supplier") 
+
+# subsets those who did and did not receive a rebate for recycling an old appliance; 
+#makes bar graphs showing age of main refrigerator for each group
+yrrebate<-filter(rebate2, RECYCAPP==1)
+plot3 <- ggplot(data=yrrebate) + geom_bar(data=yrrebate, aes(x=AGERFRI1, fill=as.factor(AGERFRI1)), show.legend=FALSE) + labs(x="Age of Refrigerator",  y= "Number of Households", title="Respondent Received Rebate for Recycling Old Appliance") 
+nrrebate <-filter(rebate2, RECYCAPP==0)
+plot4 <- ggplot(data=nrrebate) + geom_bar(data=nrrebate, aes(x=AGERFRI1, fill=as.factor(AGERFRI1)), show.legend=FALSE) + labs(x="Age of Refrigerator",  y= "Number of Households", title="Respondent Did Not Receive Rebate for Recycling Old Appliance")
+
+# subsets those who did and did not receive a tax credit for buying a new appliance; 
+#makes bar graphs showing age of main refrigerator for each group
+ytrebate<-filter(rebate3, TAXCREDITAPP==1)
+plot5 <- ggplot(data=ytrebate) + geom_bar(data=ytrebate, aes(x=AGERFRI1, fill=as.factor(AGERFRI1)), show.legend=FALSE) + labs(x="Age of Refrigerator",  y= "Number of Households", title="Respondent Received Tax Credit for Purchasing Appliance") 
+ntrebate <-filter(rebate3, TAXCREDITAPP==0)
+plot6 <- ggplot(data=ntrebate) + geom_bar(data=ntrebate, aes(x=AGERFRI1, fill=as.factor(AGERFRI1)), show.legend=FALSE) + labs(x="Age of Refrigerator",  y= "Number of Households", title="Respondent Did Not Receive Tax Credit for Purchasing Appliance")
+
+
+plot1 <- plot1 + theme(plot.title = element_text( size = 7), axis.title=element_text(size = 7))
+plot2 <- plot2 + theme(plot.title = element_text( size = 7), axis.title=element_text(size = 7))
+plot3 <- plot3 + theme(plot.title = element_text( size = 7), axis.title=element_text(size = 7))
+plot4 <- plot4 + theme(plot.title = element_text( size = 7), axis.title=element_text(size = 7))
+plot5 <- plot5 + theme(plot.title = element_text( size = 6), axis.title=element_text(size = 7))
+plot6 <- plot6 + theme(plot.title = element_text( size = 6), axis.title=element_text(size = 7))
+grid.arrange(plot1, plot2, plot3, plot4, plot5, plot6, ncol=2)
+```
+
+* Age of Refrigerator represents average number of range in data
+
+\pagebreak 
+
+# Type of Refrigerator vs. Rebate
+Larger refrigerators are more common with rebates
+
+```{r warning = FALSE}
+# subsets those who did and did not receive a rebate from supplier for buying a new appliance; 
+#makes bar graphs showing type of main refrigerator for each group
+yrebate<-filter(rebate1, REBATEAPP==1)
+plot1 <- ggplot(data=yrebate) + geom_bar(data=yrebate, aes(x=TYPERFR1, fill=as.factor(TYPERFR1)), show.legend=FALSE) + labs(x="Number of Doors", y= "Number of Households", title="Respondant Received Rebate from Utility Supplier")
+nrebate <-filter(rebate1, REBATEAPP==0)
+plot2 <- ggplot(data=nrebate) + geom_bar(data=nrebate, aes(x=TYPERFR1, fill=as.factor(TYPERFR1)), show.legend=FALSE) + labs(x="Number of Doors", y= "Number of Households", title="Respondant Did Not Receive Rebate from Utility Supplier")
+
+# subsets those who did and did not receive a rebate for recycling an old appliance; 
+#makes bar graphs showing type of main refrigerator for each group
+yrrebate<-filter(rebate2, RECYCAPP==1)
+plot3 <- ggplot(data=yrrebate) + geom_bar(data=yrrebate, aes(x=TYPERFR1, fill=as.factor(TYPERFR1)), show.legend=FALSE) + labs(x="Number of Doors", y= "Number of Households", title="Respondant Received Rebate for Recycling Old Appliance")
+nrrebate <-filter(rebate2, RECYCAPP==0)
+plot4 <- ggplot(data=nrrebate) + geom_bar(data=nrrebate, aes(x=TYPERFR1, fill=as.factor(TYPERFR1)), show.legend=FALSE) + labs(x="Number of Doors", y= "Number of Households", title="Respondant Did Not Receive Rebate for Recycling Old Appliance")
+
+# subsets those who did and did not receive a tax credit for buying a new appliance; 
+#makes bar graphs showing type of main refrigerator for each group
+ytrebate<-filter(rebate3, TAXCREDITAPP==1)
+plot5 <- ggplot(data=ytrebate) + geom_bar(data=ytrebate, aes(x=TYPERFR1, fill=as.factor(TYPERFR1)), show.legend=FALSE) + labs(x="Number of Doors", y= "Number of Households", title="Respondant Received Tax Credit for Purchasing Appliance") 
+ntrebate <-filter(rebate3, TAXCREDITAPP==0)
+plot6 <- ggplot(data=ntrebate) + geom_bar(data=ntrebate, aes(x=TYPERFR1, fill=as.factor(TYPERFR1)), show.legend=FALSE) + labs(x="Number of Doors", y= "Number of Households", title="Respondant Did Not Receive Tax Credit for Purchasing Appliance")
+
+
+plot1 <- plot1 + theme(plot.title = element_text( size = 7), axis.title=element_text(size = 7))
+plot2 <- plot2 + theme(plot.title = element_text( size = 7), axis.title=element_text(size = 7))
+plot3 <- plot3 + theme(plot.title = element_text( size = 7), axis.title=element_text(size = 7))
+plot4 <- plot4 + theme(plot.title = element_text( size = 7), axis.title=element_text(size = 7))
+plot5 <- plot5 + theme(plot.title = element_text( size = 6), axis.title=element_text(size = 7))
+plot6 <- plot6 + theme(plot.title = element_text( size = 6), axis.title=element_text(size = 7))
+grid.arrange(plot1, plot2, plot3, plot4, plot5, plot6, ncol=2)
+```
+
+\pagebreak
+
+# Homeowner Status vs. Refrigerator sales
+
+The data shows that most refrigerators are owned by people who also own their place of residence. Homeowners are also more likely to own more than one refrigerator than those who rent. It is uncommon for renters to have refrigerators with three-door designs, which means that renters would be less likely to purchase a more expensive model.
+
+# Homeowners are the primary market:
+```{r}
+ggplot(data = fridge, mapping = aes(x = NUMFRIG, fill = KOWNRENT)) + 
+  geom_histogram(binwidth = 1)  +
+  facet_wrap(~ as.factor(KOWNRENT), nrow=3) +
+  scale_fill_hue(name="Home Ownership Status", labels=c("Other", "Own", "Rent")) +
+  labs(title="Number of Refrigerators vs. Home Ownership Status", x="Number of Refrigerators")
+```
+
+# Renters have less expensive refrigerators:
+```{r warning = FALSE}
+ggplot(data=fridge, mapping=aes(x=TYPERFR1, fill = KOWNRENT)) +
+  geom_histogram(binwidth = 1) + facet_wrap(~ as.factor(KOWNRENT), nrow=3) +
+  scale_fill_hue(name="Home Ownership Status", labels=c("Other", "Own", "Rent")) +
+  labs(title="Type of Refrigerator vs. Home Ownership Status", x="Number of Refrigerator Doors")
+```
+
+# Homeowners buy larger refrigerators:
+```{r warning = FALSE}
+ggplot(data=fridge, mapping=aes(x=SIZRFRI1, fill = KOWNRENT)) + 
+  geom_histogram(binwidth = 1) + facet_wrap(~ as.factor(KOWNRENT), nrow=3) + 
+  scale_fill_hue(name="Home Ownership Status", labels=c("Other", "Own", "Rent")) +
+  labs(title="Size of Primary Refrigerator and Home Ownership", x="Size of Refrigerator (smallest to largest)")
+```
+
+# Homeowners are more likely to have luxury refrigerators with ice dispensers:
+```{r warning = FALSE}
+
+# How can I get rid of everything in the negative?
+ggplot(data = filter(fridge, !is.na(ICE)), mapping=aes(x=ICE, fill = KOWNRENT)) +
+  geom_bar() + facet_wrap(~ as.factor(KOWNRENT), nrow=3) +
+  scale_fill_hue(name="Home Ownership Status", labels=c("Other", "Own", "Rent")) +
+  labs(title="In-Door Ice and Home Ownership", x = "Ice")
+```
+
+\pagebreak
+
+# Location in the United States as it correlates to refrigerator ownership
+
+Some areas of the United States have increased rates of refrigerator ownership. This may be due to a variety of factors like available supermarkets, climate, and food customs. Advertising to the places that have more people who own multiple refrigerators will likely be more successful than in other areas where this is less common.
+
+
+```{r warning=FALSE}
+ggplot(data=fridge, mapping=aes(x = DIVISION, y = NUMFRIG, color = as.factor(DIVISION))) + geom_jitter(aes(show.legend=F)) + labs(title="Number of Refrigerators Per Division", y="Number of Refrigerators", x="Geographic Division") + theme(axis.text.x = element_text(angle = 70, hjust = 1), legend.position = "none") 
+
+```
+
+\pagebreak
+
+#T-Test for Difference of Means 
+Because the sample size for each census division is different, the plot does not give us as much information as we would like. After running an independent t-test for difference in means, comparing each region to the national average, the following information was found: 
+
+Division     | Average #      | p-value | Significant?
+-------------| -------------- |---------|------------
+Nationally   | 1.395          |         |
+New England  | 1.352          | 0.2692  |
+MidAtlantic  | 1.447          | 0.0933  | *
+ENC          | 1.419          | 0.3379  |
+WNC          | 1.501          | 0.0019  | **
+S.Atlantic   | 1.368          | 0.2145  |
+ESC          | 1.323          | 0.031   | **
+WSC          | 1.384          | 0.7393  |
+Mountain N.  | 1.496          | 0.0409  | **
+Mountain S.  | 1.335          | 0.125   |
+Pacific      | 1.363          | 0.124
+
+
+Based on this information, we can conclude, at reasonable $\alpha$ levels, that people in the MidAtlantic, WNC, and Mountain N. have more refrigerators on average than the average national number. Those in ESC have fewer refrigerators on average. As stated before, this may be due in part to lack of availability of grocery stores in the region, or different culinary customs.
+
+```{r warning = FALSE, include = FALSE}
+#this chunks the indices for each division so that other data may be stratified based on division
+NewEngland <- which(fridge$DIVISION %in% "New England")
+MidAt <- which(fridge$DIVISION %in% "Mid Atlantic") 
+ENC <- which(fridge$DIVISION %in% "East North Central")
+WNC <- which(fridge$DIVISION %in% "West North Central")
+SoAt <- which(fridge$DIVISION %in% "South Atlantic")
+ESC <- which(fridge$DIVISION %in% "East South Central")
+WSC <- which(fridge$DIVISION %in% "West South Central")
+MNo <- which(fridge$DIVISION %in% "Mountain North")
+MSo <- which(fridge$DIVISION %in% "Mountain South")
+Pacific <- which(fridge$DIVISION %in% "Pacific")
+
+#This finds the number of fridges per household based on which geographic division they reside in
+NewEngland1 <- fridge$NUMFRIG[NewEngland]
+MidAt1 <- fridge$NUMFRIG[MidAt]
+ENC1 <- fridge$NUMFRIG[ENC]
+WNC1 <- fridge$NUMFRIG[WNC]
+SoAt1 <- fridge$NUMFRIG[SoAt]
+ESC1 <- fridge$NUMFRIG[ESC]
+WSC1 <- fridge$NUMFRIG[WSC]
+MNo1 <- fridge$NUMFRIG[MNo]
+MSo1 <- fridge$NUMFRIG[MSo]
+Pacific1 <- fridge$NUMFRIG[Pacific]
+
+#this is an independent t-test to test if the average number of fridges per geographic division is the same or different from the national average
+t.test(fridge$NUMFRIG, NewEngland1) 
+t.test(fridge$NUMFRIG, MidAt1)
+t.test(fridge$NUMFRIG, ENC1)
+t.test(fridge$NUMFRIG, WNC1) 
+t.test(fridge$NUMFRIG, SoAt1)
+t.test(fridge$NUMFRIG, ESC1)
+t.test(fridge$NUMFRIG, WSC1)
+t.test(fridge$NUMFRIG, MNo1)
+t.test(fridge$NUMFRIG, MSo1)
+t.test(fridge$NUMFRIG, Pacific1)
+```
+
+\pagebreak
+
+# Areas with multiple refrigerator households:
+Of those who have two or more refrigerators, the Pacific, South Atlantic, and East North Central are where the percentage of households with multiple refrigerators are located. Similarly, as shown, of those households without a refrigerator, the highest proportion of houses is in West South Central and South Atlantic. This is interesting and surprising because it seems like most households in the South Atlantic either have multiple refrigerators or none at all. 
+
+
+```{r message=FALSE}
+
+#This chunk looks only at those who have 2+ refrigerators 
+y <- which(fridge$NUMFRIG %in% c(2, 3, 4, 5, 6, 7, 8))
+mark1 <-fridge$DIVISION[y]
+
+#this plots those who have 2+ refrigerators based on their geographic division
+mark1 <- data.frame(x=mark1)
+ggplot(mark1, aes(x=x))+
+  geom_bar(color="black", fill= "light coral", aes(y = (..count..)/sum(..count..))) + scale_x_discrete(limits=c("New England","Mid Atlantic", "East North Central", "West North Central", "South Atlantic", "East South Central", "West South Central", "Mountain North", "Mountain South", "Pacific"))+
+  labs(title="Geographic Division of those with 2 or More Refrigerators", x="Geographic Division", y="% Of Households") + theme(axis.text.x = element_text(angle = 70, hjust = 1))
+```
+```{r message = FALSE}
+#this chunk looks at homes with 0 refrigerators
+zero <- which(fridge$NUMFRIG %in% c(0))
+mark <- fridge$DIVISION[zero]
+mark <- data.frame(x=mark)
+ggplot(mark, aes(x=x))+
+  geom_bar(color="black", fill="aqua marine", aes(y = (..count..)/sum(..count..)))+
+  scale_x_discrete(limits=c("New England","Mid Atlantic", "East North Central", "West North Central", "South Atlantic", "East South Central", "West South Central", "Mountain North", "Mountain South", "Pacific"))+
+  labs(title="Geographic Division of those with 0 Refrigerators", x="Geographic Division", y="% Of Households") + theme(axis.text.x = element_text(angle = 70, hjust = 1))
+```
+
+\pagebreak
+
+#Age of Refrigerator Based on Geographic Location
+Based on the figure below, we can see that those in the Mountain North region have fewer refrigerators over 5-7 years old. In comparison, those in the MidAtlantic region have a higher concentration of older refrigerators when looking at the corresponding sample sizes. As a result, one can look to the regions containing a larger number of older refrigerators when marketing replacements.
+
+```{r warning = FALSE}
+ggplot(data=fridge, mapping=aes(x=DIVISION, y=AGERFRI1, colour = DIVISION, show.legend = FALSE)) + geom_jitter() + labs(title="Age of Most Used Refrigerator vs. Geographic Region", x="Geographic Region", y="Age of Most Used Refrigerator") + theme(axis.text.x = element_text(angle = 70, hjust = 1),legend.position = "none")
+
+
+
+```
+
+\pagebreak
+
+#Urban Type also impacts number of Freezers
+From just looking at the figure below, it is evident that those in Rural areas have more separate freezers than those who live in Urban areas or Urban Clusters. This is likely due to increased distance between home and the grocery store, making larger grocery trips more efficient. With this information, we can choose to market refrigerators with larger freezers to individuals in rural areas so that they do not have to rely as much on their extra freezer.
+
+
+```{r message = FALSE}
+#This plots the number of refrigerators vs the urban location type 
+ggplot(data = fridge, mapping = aes(x = UATYP10, y = NUMFREEZ, colour = as.factor(UATYP10))) + geom_jitter() + labs(title="Number of Freezers vs. Urban Type", x="Urban Type", y="Number of Freezers")+ scale_colour_hue(name="Location Type", labels=c("Urban Cluster","Rural","Urban Area"))
+```
+
+\pagebreak
+
+# Retired and Fully employed people are most likely to own multiple refrigerators:
+As a result, a marketing campaign aimed more towards those who are Retired or Fully Employed. They may have higher rates of refrigerator ownership due to having incomes which place them in an economically stable position where they feel more comfortable buying more "luxury" type goods.
+
+
+```{r message=FALSE}
+#this plots the number of fridges for each employment status
+ggplot(data=fridge, mapping=aes(x=EMPLOYHH, y=NUMFRIG, color=as.factor(EMPLOYHH))) + 
+  geom_jitter() + labs(title="Number of Refrigerator vs. Employment Status of Household", x="Employment Status", y="Number of Refrigerator") +
+  scale_colour_hue(name="Employment Status", labels=c("Retired","Full Time","Part Time"))
+
+```
+
+\pagebreak
+
+# People who cook more tend to own more refrigerators
+
+People that cook more hot meals frequently own more refrigerators, which makes them an obvious group to advertise to. They also are more likely to own refrigerators that are extreme on the size spectrum; meaning that those who cook often are more likely to own very large or small refrigerators in addition to the most common sizes. Advertising refrigerators to people who are in the market for other cooking appliances and apparatuses would likely yield results, as these are likely predictors of those who cook more often.
+
+
+
+```{r}
+
+#Amount of Hot meals cooked against fridges
+ggplot(data=fridge, aes(y = as.numeric(NUMMEAL), x = as.factor(NUMFRIG), color=as.factor(NUMFRIG))) + geom_boxplot() +
+  labs(title= "Meals cooked vs. Number of Refrigerators owned", y = "Number of Meals Cooked", x = "Number of Refrigerators") +
+  scale_colour_hue(name="")
+
+```
+
+\pagebreak
+
+# The largest and smallest refrigerators are bought by those who cook more frequently:
+
+The only significant increase in refrigerator ownership is within the group that cooks a few meals a day, who also tend to have smaller than average refrigerators. Because this group is the most populous, we can assume that the average consumer would be willing to purchase an additional small refrigerator given conducive advertising.
+
+
+
+```{r warning = FALSE}
+ggplot(data=fridge, aes(y = NUMMEAL, x = SIZRFRI1, color=as.factor((SIZRFRI1)))) + geom_boxplot() + labs(title="Meals cooked vs. Size of Refrigerator",y = "Number of Meals Cooked",x ="Size of Refrigerator") +
+  scale_colour_hue(name="")
+
+
+```
+
+\pagebreak
+
+# Final Conclusions
+
+
+Over the course of our exploration, we found that folks living in the Mid-Atlantic tend to have older refrigerators and, thus, may be in the market for upgrades. We also found that rural communities are more likely to have larger refrigerators than urban clusters, which could also be linked to home-ownership as owners are more likely to own large refrigerators than renters. Thus, rural homeowners provide the optimum market for large refrigerators. Money also plays a role in refrigerator ownership, as those who received rebates are more likely to own more and more expensive refrigerators. In light of this, marketing higher-end refrigerators to those with these monetary incentives is a worthwhile endeavor as they are more likely to purchase these products and more of said products. We also found, relatively unsurprisingly, that those who cook more meals per week are more likely to own more refrigerators and refrigerators smaller and larger than the general average. All of these factors, we can predict, give us a few key groups to target: rural homeowners for large refrigerators or those with larger freezers; large refrigerators for those living in the South Atlantic; urban renters for smaller, more basic refrigerator designs; homeowners in areas with monetary incentives for eco-friendly refrigerator upgrades with high-end refrigerators; and Mid-Atlantic dwellers for updates on their largely out-dated refrigerators.      
